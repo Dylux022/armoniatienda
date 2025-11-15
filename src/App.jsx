@@ -1,0 +1,74 @@
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Sahumerios from "./pages/Sahumerios";
+import Aromatizantes from "./pages/Aromatizantes";
+import Textil from "./pages/Textil";
+import Cart from "./pages/Cart";
+
+const App = () => {
+  // ✅ Inicializar carrito leyendo localStorage UNA sola vez
+  const [cart, setCart] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const storedCart = localStorage.getItem("cart");
+      return storedCart ? JSON.parse(storedCart) : [];
+    } catch (e) {
+      console.error("Error leyendo carrito del localStorage", e);
+      return [];
+    }
+  });
+
+  // ✅ Cada vez que cambia el carrito, lo guardamos en localStorage
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+  const handleAddToCart = (product) => {
+    setCart((prev) => [...prev, product]);
+  };
+
+  const handleRemoveFromCart = (indexToRemove) => {
+    if (indexToRemove === "all") {
+      setCart([]);
+      return;
+    }
+    setCart((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-slate-950 text-slate-100">
+        <Navbar cartCount={cart.length} />
+
+        <main className="max-w-5xl mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route
+              path="/sahumerios"
+              element={<Sahumerios onAddToCart={handleAddToCart} />}
+            />
+            <Route
+              path="/aromatizantes"
+              element={<Aromatizantes onAddToCart={handleAddToCart} />}
+            />
+            <Route
+              path="/textil"
+              element={<Textil onAddToCart={handleAddToCart} />}
+            />
+            <Route
+              path="/carrito"
+              element={
+                <Cart cart={cart} onRemoveItem={handleRemoveFromCart} />
+              }
+            />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
+  );
+};
+
+export default App;
