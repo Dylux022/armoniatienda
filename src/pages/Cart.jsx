@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 function Cart({ cart, onRemoveItem }) {
   const total = cart.reduce((acc, item) => acc + item.precio, 0);
@@ -42,7 +43,6 @@ function Cart({ cart, onRemoveItem }) {
             <button
               className="text-xs px-3 py-1 rounded-full border border-slate-500 text-slate-300 hover:bg-slate-800 transition-all"
               onClick={() => {
-                // vaciar carrito usando onRemoveItem especial
                 onRemoveItem("all");
               }}
             >
@@ -54,6 +54,13 @@ function Cart({ cart, onRemoveItem }) {
             </p>
           </div>
 
+          {/* 🔥 BOTÓN FINALIZAR COMPRA */}
+          <Link
+            to="/checkout"
+            className="block w-full text-center mt-4 py-2 bg-emerald-400 text-slate-950 rounded-full hover:bg-emerald-300 transition-all"
+          >
+            Finalizar compra
+          </Link>
         </>
       )}
     </div>

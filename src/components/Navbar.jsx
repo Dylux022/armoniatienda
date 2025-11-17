@@ -52,6 +52,16 @@ const Navbar = ({ cartCount = 0 }) => {
               Perfume textil
             </Link>
           </li>
+
+          <li>
+  <Link
+    to="/admin"
+    className="text-[11px] px-2 py-1 rounded-full border border-slate-600 text-slate-300 hover:border-emerald-400 hover:text-emerald-300 transition-colors"
+  >
+    Admin
+  </Link>
+</li>
+
         </ul>
 
                {/* Carrito */}
