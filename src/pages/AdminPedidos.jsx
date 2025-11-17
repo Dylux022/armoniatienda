@@ -8,15 +8,22 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-const ADMIN_EMAIL = "ellautysk8@gmail.com";
-const ADMIN_WHATSAPP = "5491130560849"; // ← tu número
+// MULTI-ADMIN: Lista de correos autorizados
+const ADMIN_EMAILS = [
+  "dylanc021684@gmail.com",
+  "thagostina@gmail.com",
+  "ellaautysk8@gmail.com",
+];
+
+// Tu número de WhatsApp en formato internacional
+const ADMIN_WHATSAPP = "5491130560849";
 
 function AdminPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // Verificar sesión admin
+  // Verificar sesión del usuario
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -25,23 +32,28 @@ function AdminPedidos() {
     return () => unsub();
   }, []);
 
-  // Cargar pedidos
+  // Cargar pedidos desde Firestore
   useEffect(() => {
     const cargarPedidos = async () => {
       try {
         const snap = await getDocs(collection(db, "pedidos"));
         const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        // Ordenar por fecha (más nuevos arriba)
         data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         setPedidos(data);
+
       } catch (err) {
         console.error("Error cargando pedidos:", err);
       }
     };
 
-    if (user?.email === ADMIN_EMAIL) cargarPedidos();
+    if (user && ADMIN_EMAILS.includes(user.email)) {
+      cargarPedidos();
+    }
   }, [user]);
 
-  // Actualizar estado
+  // Actualizar estado de un pedido
   const actualizarEstado = async (id, nuevoEstado) => {
     try {
       await updateDoc(doc(db, "pedidos", id), { estado: nuevoEstado });
@@ -51,12 +63,13 @@ function AdminPedidos() {
           p.id === id ? { ...p, estado: nuevoEstado } : p
         )
       );
+
     } catch (err) {
       console.error("Error actualizando estado:", err);
     }
   };
 
-  // Formatear mensaje WhatsApp
+  // Armar mensaje para WhatsApp
   const generarMensaje = (p) => {
     const fechaFormateada = p.fecha
       ? new Date(p.fecha).toLocaleString()
@@ -85,18 +98,18 @@ ID del pedido: ${p.id}
     `;
   };
 
-  // Enviar a WhatsApp
+  // Enviar por WhatsApp
   const enviarWhatsapp = (pedido) => {
     const mensaje = encodeURIComponent(generarMensaje(pedido));
     const url = `https://wa.me/${ADMIN_WHATSAPP}?text=${mensaje}`;
     window.open(url, "_blank");
   };
 
-  // Vistas de permisos
+  // Pantallas de permisos
   if (loadingAuth) return <p className="text-slate-300">Verificando sesión...</p>;
-  if (!user) return <p className="text-red-300">Tenés que iniciar sesión.</p>;
-  if (user.email !== ADMIN_EMAIL)
-    return <p className="text-red-300">No tenés permisos para ver pedidos.</p>;
+  if (!user) return <p className="text-red-300">Tenés que iniciar sesión para ver los pedidos.</p>;
+  if (!ADMIN_EMAILS.includes(user.email))
+    return <p className="text-red-300">Esta cuenta no tiene permisos para ver pedidos.</p>;
 
   // Vista principal
   return (
@@ -144,9 +157,11 @@ ID del pedido: ${p.id}
               <span className="text-emerald-300">${p.total}</span>
             </p>
 
-            {/* SELECT DE ESTADO */}
+            {/* SELECT DEL ESTADO */}
             <div className="flex items-center gap-2">
-              <p className="text-sm text-slate-300"><strong>Estado:</strong></p>
+              <p className="text-sm text-slate-300">
+                <strong>Estado:</strong>
+              </p>
               <select
                 value={p.estado}
                 onChange={(e) =>
@@ -165,12 +180,14 @@ ID del pedido: ${p.id}
               <p className="text-sm font-medium text-slate-200">Productos:</p>
               <ul className="list-disc ml-5 text-[13px] text-slate-400">
                 {p.items?.map((i, idx) => (
-                  <li key={idx}>{i.nombre} — ${i.precio}</li>
+                  <li key={idx}>
+                    {i.nombre} — ${i.precio}
+                  </li>
                 ))}
               </ul>
             </div>
 
-            {/* 🔥 BOTÓN WHATSAPP */}
+            {/* BOTÓN WHATSAPP */}
             <button
               onClick={() => enviarWhatsapp(p)}
               className="mt-3 w-full bg-green-500/90 hover:bg-green-400 text-slate-900 font-medium py-1.5 rounded-full transition-all text-sm"
