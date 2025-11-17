@@ -51,15 +51,13 @@ function Aromatizantes({ onAddToCart }) {
         Aromatizantes 🌬️
       </h2>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* GRID RESPONSIVE: 1 / 2 / 3 columnas */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
           <ProductCard
             key={p.id}
-            nombre={p.nombre}
-            descripcion={p.descripcion}
-            precio={p.precio}
-            imagen={p.imagen}
-            onAdd={() => onAddToCart(p)}
+            product={p}
+            onAddToCart={onAddToCart}
           />
         ))}
       </div>
