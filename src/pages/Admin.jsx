@@ -8,8 +8,12 @@ import {
 } from "firebase/auth";
 import { Link } from "react-router-dom";
 
-
-const ADMIN_EMAIL = "ellautysk8@gmail.com"; // acá va tu mail
+// MISMO LISTADO DE ADMINS QUE EN AdminPedidos.jsx
+const ADMIN_EMAILS = [
+  "dylanc021684@gmail.com",
+  "thagostina@gmail.com",
+   "ellautysk8@gmail.com",
+];
 
 const Admin = () => {
   const [categoria, setCategoria] = useState("sahumerios");
@@ -98,7 +102,7 @@ const Admin = () => {
           Panel admin – Iniciar sesión
         </h2>
         <p className="text-sm text-slate-400">
-          Esta sección es sólo para administración de Armonía.ald.
+          Esta sección es sólo para administración de Armonía.ALD.
           Iniciá sesión con tu cuenta de Google para continuar.
         </p>
 
@@ -116,15 +120,16 @@ const Admin = () => {
     );
   }
 
-  // 3) Si hay usuario pero NO es el admin correcto
-  if (user.email !== ADMIN_EMAIL) {
+  // 3) Si hay usuario pero NO está en la lista de admins
+  if (!ADMIN_EMAILS.includes(user.email)) {
     return (
       <div className="space-y-4 max-w-md">
         <h2 className="text-2xl font-semibold text-emerald-300">
           Sin permisos
         </h2>
         <p className="text-sm text-slate-400">
-          Estás logueado como <span className="text-emerald-300">{user.email}</span>, 
+          Estás logueado como{" "}
+          <span className="text-emerald-300">{user.email}</span>, 
           pero esta cuenta no tiene acceso de administración.
         </p>
         <button
@@ -137,7 +142,7 @@ const Admin = () => {
     );
   }
 
-  // 4) Si es el admin correcto → mostrar formulario
+  // 4) Si es un admin válido → mostrar formulario
   return (
     <div className="space-y-6 max-w-xl">
       <div className="flex items-center justify-between gap-4">
@@ -146,16 +151,19 @@ const Admin = () => {
             Panel admin – Cargar producto
           </h2>
           <p className="text-xs text-slate-400">
-            Logueado como <span className="text-emerald-300">{user.email}</span>
+            Logueado como{" "}
+            <span className="text-emerald-300">{user.email}</span>
           </p>
-          <Link
-  to="/admin/pedidos"
-  className="text-xs text-emerald-300 underline block mb-2"
->
-  Ver pedidos
-</Link>
 
+          {/* Link a pedidos */}
+          <Link
+            to="/admin/pedidos"
+            className="text-xs text-emerald-300 underline block mt-1"
+          >
+            Ver pedidos
+          </Link>
         </div>
+
         <button
           onClick={handleLogout}
           className="px-3 py-1.5 rounded-full border border-slate-600 text-slate-200 text-xs hover:bg-slate-900 transition-all"

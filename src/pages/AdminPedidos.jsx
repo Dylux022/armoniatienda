@@ -10,10 +10,9 @@ import { onAuthStateChanged } from "firebase/auth";
 
 // MULTI-ADMIN: Lista de correos autorizados
 const ADMIN_EMAILS = [
-  "dylanc021682@gmail.com",
-  "ellaautysk8@gmail.com",
-   "dylanc021684@gmail.com",
-   "thagostina@gmail.com",
+  "dylanc021684@gmail.com",
+  "thagostina@gmail.com",
+   "ellautysk8@gmail.com",
    
 ];
 
