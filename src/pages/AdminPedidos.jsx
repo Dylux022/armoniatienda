@@ -12,6 +12,7 @@ import { onAuthStateChanged } from "firebase/auth";
 const ADMIN_EMAILS = [
   "dylanc021682@gmail.com",
   "ellaautysk8@gmail.com",
+   "dylanc021684@gmail.com",
 ];
 
 // Tu número de WhatsApp en formato internacional
