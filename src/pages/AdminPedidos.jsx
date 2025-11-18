@@ -76,9 +76,13 @@ function AdminPedidos() {
       ? new Date(p.fecha).toLocaleString()
       : "—";
 
-    const productosTexto = p.items
-      ?.map((i) => `• ${i.nombre} — $${i.precio}`)
-      .join("\n");
+const productosTexto = p.items
+  ?.map(
+    (i) =>
+      `• ${i.nombre} — $${i.precio} x ${i.cantidad} = $${i.precio * i.cantidad}`
+  )
+  .join("\n");
+
 
     return `
 Nuevo pedido para Armonía.ALD 💚
@@ -179,13 +183,14 @@ ID del pedido: ${p.id}
             {/* LISTA DE PRODUCTOS */}
             <div className="mt-2">
               <p className="text-sm font-medium text-slate-200">Productos:</p>
-              <ul className="list-disc ml-5 text-[13px] text-slate-400">
-                {p.items?.map((i, idx) => (
-                  <li key={idx}>
-                    {i.nombre} — ${i.precio}
-                  </li>
-                ))}
-              </ul>
+            <ul className="list-disc ml-5 text-[13px] text-slate-400">
+  {p.items?.map((i, idx) => (
+    <li key={idx}>
+      {i.nombre} — ${i.precio} x {i.cantidad} = ${i.precio * i.cantidad}
+    </li>
+  ))}
+</ul>
+
             </div>
 
             {/* BOTÓN WHATSAPP */}

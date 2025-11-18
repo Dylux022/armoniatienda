@@ -3,7 +3,7 @@ import ProductCard from "../components/ProductCard";
 import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 
-function Sahumerios({ onAddToCart }) {
+function Sahumerios({ onAddToCart, cart }) {
   const [items, setItems] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -49,15 +49,24 @@ function Sahumerios({ onAddToCart }) {
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-emerald-300">Sahumerios 🌿</h2>
 
-      {/* GRID RESPONSIVE: 1 / 2 / 3 columnas */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            onAddToCart={onAddToCart}
-          />
-        ))}
+        {items.map((p) => {
+          const productoConCategoria = { ...p, categoria: "sahumerios" };
+          const enCarrito = cart.find(
+            (item) =>
+              item.id === p.id && item.categoria === "sahumerios"
+          );
+          const currentQuantity = enCarrito?.cantidad ?? 0;
+
+          return (
+            <ProductCard
+              key={p.id}
+              product={productoConCategoria}
+              currentQuantity={currentQuantity}
+              onAddToCart={onAddToCart}
+            />
+          );
+        })}
       </div>
     </div>
   );

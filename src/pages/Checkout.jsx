@@ -17,10 +17,15 @@ function Checkout({ cart, onClearCart }) {
   const [estado, setEstado] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
-  const total = useMemo(
-    () => cart.reduce((acc, item) => acc + (item.precio || 0), 0),
-    [cart]
-  );
+const total = useMemo(
+  () =>
+    cart.reduce(
+      (acc, item) => acc + (item.precio || 0) * (item.cantidad || 1),
+      0
+    ),
+  [cart]
+);
+
 
   // Si el carrito está vacío, no tiene sentido hacer checkout
   if (!cart || cart.length === 0) {
@@ -291,22 +296,34 @@ function Checkout({ cart, onClearCart }) {
         </h3>
 
         <div className="space-y-2 max-h-64 overflow-auto pr-1">
-          {cart.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between gap-2 text-sm bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2"
-            >
-              <div className="flex-1">
-                <p className="text-emerald-200">{item.nombre}</p>
-                {item.descripcion && (
-                  <p className="text-[11px] text-slate-400 line-clamp-1">
-                    {item.descripcion}
-                  </p>
-                )}
-              </div>
-              <p className="text-sm text-emerald-300">${item.precio}</p>
-            </div>
-          ))}
+{cart.map((item, idx) => (
+  <div
+    key={idx}
+    className="flex items-center justify-between gap-2 text-sm bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2"
+  >
+    <div className="flex-1">
+      <p className="text-emerald-200">{item.nombre}</p>
+
+      {/* Si querés dejar la descripción, dejamos esto */}
+      {item.descripcion && (
+        <p className="text-[11px] text-slate-400 line-clamp-1">
+          {item.descripcion}
+        </p>
+      )}
+
+      {/* Cantidad y precio unitario */}
+      <p className="text-[11px] text-slate-400">
+        ${item.precio} x {item.cantidad}
+      </p>
+    </div>
+
+    {/* Subtotal por producto */}
+    <p className="text-sm font-semibold text-emerald-300">
+      ${item.precio * item.cantidad}
+    </p>
+  </div>
+))}
+
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-800 pt-3">
