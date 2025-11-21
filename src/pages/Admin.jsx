@@ -38,6 +38,8 @@ const Admin = () => {
 
   const [productos, setProductos] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(false);
+  const [stock, setStock] = useState(0);
+
 
   // ID del producto que se está editando (si es null, estamos creando uno nuevo)
   const [editandoId, setEditandoId] = useState(null);
@@ -122,6 +124,7 @@ const Admin = () => {
           descripcion,
           precio: precioNumber,
           imagen,
+          stock,
         });
 
         setEstado({
@@ -136,6 +139,7 @@ const Admin = () => {
           descripcion,
           precio: precioNumber,
           imagen,
+          stock,
         });
 
         setEstado({
@@ -314,6 +318,21 @@ const Admin = () => {
             onChange={(e) => setImagen(e.target.value)}
           />
         </div>
+
+        {/* STOCK */}
+<div className="space-y-1">
+  <label className="text-sm text-slate-300">Stock</label>
+  <input
+    type="number"
+    min="0"
+    value={stock}
+    onChange={(e) => setStock(Number(e.target.value))}
+    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200"
+    placeholder="Ej: 10"
+    required
+  />
+</div>
+
 
         <div className="flex items-center gap-3">
           <button
