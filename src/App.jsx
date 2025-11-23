@@ -127,10 +127,10 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-        <Navbar cartCount={cart.length} />
+<div className="min-h-screen bg-[#f5f3f0] text-slate-900 flex flex-col antialiased">
+  <Navbar cartCount={cart.length} />
 
-        <main className="max-w-5xl mx-auto px-4 py-8 flex-grow">
+       <main className="max-w-5xl mx-auto px-4 py-8 text-soft">
           <Routes>
             <Route path="/" element={<Home />} />
 

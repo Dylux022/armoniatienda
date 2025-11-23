@@ -5,8 +5,8 @@ const Navbar = ({ cartCount }) => {
   const [open, setOpen] = useState(false);
 
   const linkBase =
-    "text-sm text-slate-200 hover:text-emerald-300 transition-colors";
-  const activeClass = "text-emerald-300";
+    "text-sm text-slate-700 hover:text-emerald-600 transition-colors";
+  const activeClass = "text-emerald-700 font-medium";
 
   const navLinks = (
     <>
@@ -54,9 +54,11 @@ const Navbar = ({ cartCount }) => {
       <NavLink
         to="/admin"
         className={({ isActive }) =>
-          `text-xs px-2 py-1 rounded-full border border-slate-600 hover:border-emerald-400 hover:text-emerald-300 transition-colors ${
-            isActive ? "text-emerald-300" : "text-slate-300"
-          }`
+          `text-xs px-3 py-1 rounded-full border ${
+            isActive
+              ? "border-emerald-500 text-emerald-700 bg-white"
+              : "border-slate-300 text-slate-600 hover:border-emerald-500 hover:text-emerald-700"
+          } transition-colors`
         }
         onClick={() => setOpen(false)}
       >
@@ -66,14 +68,15 @@ const Navbar = ({ cartCount }) => {
   );
 
   return (
-    <header className="bg-slate-950/80 border-b border-slate-800 sticky top-0 z-40 backdrop-blur">
+    <header className="backdrop-blur-md bg-white/90 border-b border-slate-200 sticky top-0 z-40 shadow-sm text-soft">
+
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Logo / marca */}
         <Link to="/" className="flex items-baseline gap-1">
-          <span className="text-xl font-semibold tracking-wide text-emerald-300">
+          <span className="text-xl font-semibold tracking-wide text-slate-900">
             Armonía
           </span>
-          <span className="text-sm font-medium text-emerald-500">.ald</span>
+          <span className="text-sm font-medium text-emerald-600">.ald</span>
         </Link>
 
         {/* Menú desktop */}
@@ -86,14 +89,14 @@ const Navbar = ({ cartCount }) => {
           {/* Carrito */}
           <Link
             to="/carrito"
-            className="relative flex items-center gap-1 text-sm text-slate-200 hover:text-emerald-300 transition-colors"
+            className="relative flex items-center gap-1 text-sm text-slate-700 hover:text-emerald-600 transition-colors"
             onClick={() => setOpen(false)}
           >
             <span role="img" aria-label="carrito">
               🛒
             </span>
             {cartCount > 0 && (
-              <span className="text-xs bg-emerald-400 text-slate-950 rounded-full px-2 py-0.5">
+              <span className="text-xs bg-emerald-500 text-white rounded-full px-2 py-0.5 shadow-sm">
                 {cartCount}
               </span>
             )}
@@ -101,7 +104,7 @@ const Navbar = ({ cartCount }) => {
 
           {/* Botón hamburguesa (solo mobile) */}
           <button
-            className="md:hidden inline-flex items-center justify-center rounded-md border border-slate-700 px-2 py-1 text-slate-200 hover:bg-slate-900 transition"
+            className="md:hidden inline-flex items-center justify-center rounded-md border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 transition"
             onClick={() => setOpen((prev) => !prev)}
             aria-label="Abrir menú"
           >
@@ -112,7 +115,7 @@ const Navbar = ({ cartCount }) => {
 
       {/* Menú mobile desplegable */}
       {open && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-950/95">
+        <div className="md:hidden border-t border-slate-200 bg-white">
           <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col gap-2">
             {navLinks}
           </div>
