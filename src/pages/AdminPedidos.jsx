@@ -61,7 +61,6 @@ function AdminPedidos() {
     if (!pedido.items || !Array.isArray(pedido.items)) return;
 
     const ops = pedido.items.map(async (item) => {
-      // Necesitamos id, categoria y un stock numérico para que tenga sentido
       if (!item.id || !item.categoria || typeof item.cantidad !== "number") {
         return;
       }
@@ -76,7 +75,6 @@ function AdminPedidos() {
       try {
         const ref = doc(db, colName, item.id);
         await updateDoc(ref, {
-          // Firestore se encarga de restar desde el valor actual
           stock: increment(-item.cantidad),
         });
       } catch (err) {
@@ -88,80 +86,76 @@ function AdminPedidos() {
   };
 
   // 🔹 Volver a sumar stock de TODOS los productos de un pedido
-const reponerStockDePedido = async (pedido) => {
-  if (!pedido.items || !Array.isArray(pedido.items)) return;
+  const reponerStockDePedido = async (pedido) => {
+    if (!pedido.items || !Array.isArray(pedido.items)) return;
 
-  const ops = pedido.items.map(async (item) => {
-    if (!item.id || !item.categoria || typeof item.cantidad !== "number") {
-      return;
-    }
+    const ops = pedido.items.map(async (item) => {
+      if (!item.id || !item.categoria || typeof item.cantidad !== "number") {
+        return;
+      }
 
-    let colName = null;
-    if (item.categoria === "sahumerios") colName = "sahumerios";
-    else if (item.categoria === "aromatizantes") colName = "aromatizantes";
-    else if (item.categoria === "textil") colName = "textil";
+      let colName = null;
+      if (item.categoria === "sahumerios") colName = "sahumerios";
+      else if (item.categoria === "aromatizantes") colName = "aromatizantes";
+      else if (item.categoria === "textil") colName = "textil";
 
-    if (!colName) return;
+      if (!colName) return;
 
-    try {
-      const ref = doc(db, colName, item.id);
-      await updateDoc(ref, {
-        stock: increment(item.cantidad), // 👈 volvemos a sumar
-      });
-    } catch (err) {
-      console.error("Error reponiendo stock para item:", item, err);
-    }
-  });
-
-  await Promise.all(ops);
-};
-
-
-  // Actualizar estado de un pedido
-  // 🔸 y descontar stock AUTOMÁTICAMENTE cuando pasa a "pagado" por primera vez
-const actualizarEstado = async (pedido, nuevoEstado) => {
-  try {
-    const yaDescontado = pedido.stockDescontado === true;
-
-    const pasaAPagado =
-      pedido.estado !== "pagado" && nuevoEstado === "pagado";
-
-    // Si estaba pagado y lo pasás a pendiente o cancelado → devolvemos stock
-    const pasaAPendienteOCancelado =
-      pedido.estado === "pagado" &&
-      (nuevoEstado === "pendiente" || nuevoEstado === "cancelado");
-
-    let nuevoFlagStock = pedido.stockDescontado || false;
-
-    if (pasaAPagado && !yaDescontado) {
-      await descontarStockDePedido(pedido);
-      nuevoFlagStock = true;
-    } else if (pasaAPendienteOCancelado && yaDescontado) {
-      await reponerStockDePedido(pedido);
-      nuevoFlagStock = false;
-    }
-
-    await updateDoc(doc(db, "pedidos", pedido.id), {
-      estado: nuevoEstado,
-      stockDescontado: nuevoFlagStock,
+      try {
+        const ref = doc(db, colName, item.id);
+        await updateDoc(ref, {
+          stock: increment(item.cantidad), // 👈 volvemos a sumar
+        });
+      } catch (err) {
+        console.error("Error reponiendo stock para item:", item, err);
+      }
     });
 
-    setPedidos((prev) =>
-      prev.map((p) =>
-        p.id === pedido.id
-          ? {
-              ...p,
-              estado: nuevoEstado,
-              stockDescontado: nuevoFlagStock,
-            }
-          : p
-      )
-    );
-  } catch (err) {
-    console.error("Error actualizando estado:", err);
-  }
-};
+    await Promise.all(ops);
+  };
 
+  // Actualizar estado de un pedido y manejar stock
+  const actualizarEstado = async (pedido, nuevoEstado) => {
+    try {
+      const yaDescontado = pedido.stockDescontado === true;
+
+      const pasaAPagado =
+        pedido.estado !== "pagado" && nuevoEstado === "pagado";
+
+      const pasaAPendienteOCancelado =
+        pedido.estado === "pagado" &&
+        (nuevoEstado === "pendiente" || nuevoEstado === "cancelado");
+
+      let nuevoFlagStock = pedido.stockDescontado || false;
+
+      if (pasaAPagado && !yaDescontado) {
+        await descontarStockDePedido(pedido);
+        nuevoFlagStock = true;
+      } else if (pasaAPendienteOCancelado && yaDescontado) {
+        await reponerStockDePedido(pedido);
+        nuevoFlagStock = false;
+      }
+
+      await updateDoc(doc(db, "pedidos", pedido.id), {
+        estado: nuevoEstado,
+        stockDescontado: nuevoFlagStock,
+      });
+
+      setPedidos((prev) =>
+        prev.map((p) =>
+          p.id === pedido.id
+            ? {
+                ...p,
+                estado: nuevoEstado,
+                stockDescontado: nuevoFlagStock,
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("Error actualizando estado:", err);
+    }
+  };
 
   // Armar mensaje para WhatsApp
   const generarMensaje = (p) => {
@@ -204,110 +198,167 @@ ID del pedido: ${p.id}
     window.open(url, "_blank");
   };
 
-  // Pantallas de permisos
-  if (loadingAuth)
-    return <p className="text-slate-300">Verificando sesión...</p>;
-  if (!user)
+  // Pantallas de permisos (versión linda)
+  if (loadingAuth) {
     return (
-      <p className="text-red-300">
-        Tenés que iniciar sesión para ver los pedidos.
-      </p>
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 px-5 py-4 text-sm text-slate-700">
+          Verificando sesión...
+        </div>
+      </div>
     );
-  if (!ADMIN_EMAILS.includes(user.email))
+  }
+
+  if (!user) {
     return (
-      <p className="text-red-300">
-        Esta cuenta no tiene permisos para ver pedidos.
-      </p>
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-3xl shadow-sm border border-amber-200 px-5 py-4 text-sm text-slate-700">
+          Tenés que iniciar sesión para ver los pedidos.  
+          <span className="block text-xs text-slate-500 mt-1">
+            Iniciá sesión desde el panel de administración.
+          </span>
+        </div>
+      </div>
     );
+  }
+
+  if (!ADMIN_EMAILS.includes(user.email)) {
+    return (
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-3xl shadow-sm border border-rose-200 px-5 py-4 text-sm text-slate-700">
+          Esta cuenta no tiene permisos para ver pedidos.
+          <span className="block text-xs text-slate-500 mt-1">
+            Estás logueado como{" "}
+            <span className="font-medium text-slate-900">{user.email}</span>.
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   // Vista principal
   return (
-    <div className="space-y-6 max-w-3xl">
-      <h2 className="text-2xl font-semibold text-emerald-300">
-        Pedidos recibidos 🧾
-      </h2>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Pedidos recibidos 🧾
+          </h2>
+          <p className="text-xs text-slate-600 mt-1">
+            Panel interno de administración — Armonía.ALD
+          </p>
+        </div>
+
+        <p className="text-[11px] text-slate-500 bg-white border border-slate-200 rounded-full px-3 py-1 self-start sm:self-auto">
+          Logueado como{" "}
+          <span className="font-medium text-slate-900">{user.email}</span>
+        </p>
+      </div>
 
       {pedidos.length === 0 ? (
-        <p className="text-slate-400">Todavía no hay pedidos.</p>
+        <div className="bg-white border border-slate-200 rounded-3xl px-5 py-4 shadow-sm">
+          <p className="text-sm text-slate-700">Todavía no hay pedidos.</p>
+        </div>
       ) : (
-        pedidos.map((p) => (
-          <div
-            key={p.id}
-            className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-3"
-          >
-            <p className="text-[11px] text-slate-500">
-              <strong>ID:</strong> {p.id}
-            </p>
-
-            <p className="text-sm text-slate-300">
-              <strong>Fecha:</strong>{" "}
-              {p.fecha ? new Date(p.fecha).toLocaleString() : "—"}
-            </p>
-
-            <p className="text-sm text-slate-300">
-              <strong>Cliente:</strong>{" "}
-              <span className="text-emerald-300">{p.nombreCliente}</span>
-            </p>
-
-            <p className="text-sm text-slate-300">
-              <strong>Teléfono:</strong> {p.telefono}
-            </p>
-
-            <p className="text-sm text-slate-300">
-              <strong>Método pago:</strong> {p.metodoPago}
-            </p>
-
-            <p className="text-sm text-slate-300">
-              <strong>Entrega:</strong> {p.entrega}
-            </p>
-
-            <p className="text-sm text-slate-300">
-              <strong>Total:</strong>{" "}
-              <span className="text-emerald-300">${p.total}</span>
-            </p>
-
-            {/* SELECT DEL ESTADO */}
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-slate-300">
-                <strong>Estado:</strong>
-              </p>
-            <select
-  value={p.estado}
-  onChange={(e) => actualizarEstado(p, e.target.value)}
-  className="text-xs bg-slate-800 border border-slate-600 rounded-full px-2 py-1 text-slate-200"
->
-  <option value="pendiente">Pendiente</option>
-  <option value="pagado">Pagado (descuenta stock)</option>
-  <option value="entregado">Entregado</option>
-  <option value="cancelado">Cancelado (devuelve stock)</option>
-</select>
-
-            </div>
-
-            {/* LISTA DE PRODUCTOS */}
-            <div className="mt-2">
-              <p className="text-sm font-medium text-slate-200">
-                Productos:
-              </p>
-              <ul className="list-disc ml-5 text-[13px] text-slate-400 space-y-1">
-                {p.items?.map((i, idx) => (
-                  <li key={idx}>
-                    {i.nombre} — ${i.precio} x {i.cantidad} = $
-                    {i.precio * i.cantidad}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* BOTÓN WHATSAPP */}
-            <button
-              onClick={() => enviarWhatsapp(p)}
-              className="mt-3 w-full bg-green-500/90 hover:bg-green-400 text-slate-900 font-medium py-1.5 rounded-full transition-all text-sm"
+        <div className="space-y-4">
+          {pedidos.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm space-y-3"
             >
-              Enviar por WhatsApp
-            </button>
-          </div>
-        ))
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] text-slate-500">
+                  <span className="font-semibold">ID:</span> {p.id}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  <span className="font-semibold">Fecha:</span>{" "}
+                  {p.fecha ? new Date(p.fecha).toLocaleString() : "—"}
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                <p className="text-slate-700">
+                  <span className="font-semibold">Cliente:</span>{" "}
+                  <span className="text-slate-900">
+                    {p.nombreCliente || "—"}
+                  </span>
+                </p>
+
+                <p className="text-slate-700">
+                  <span className="font-semibold">Teléfono:</span>{" "}
+                  {p.telefono || "—"}
+                </p>
+
+                <p className="text-slate-700">
+                  <span className="font-semibold">Método de pago:</span>{" "}
+                  {p.metodoPago || "—"}
+                </p>
+
+                <p className="text-slate-700">
+                  <span className="font-semibold">Entrega:</span>{" "}
+                  {p.entrega || "—"}
+                </p>
+
+                <p className="text-slate-700">
+                  <span className="font-semibold">Total:</span>{" "}
+                  <span className="font-semibold text-emerald-700">
+                    ${p.total}
+                  </span>
+                </p>
+
+                {p.stockDescontado && (
+                  <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-1 inline-flex items-center w-max">
+                    Stock descontado
+                  </p>
+                )}
+              </div>
+
+              {/* Estado */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <p className="text-sm text-slate-700 font-semibold">
+                  Estado:
+                </p>
+                <select
+                  value={p.estado}
+                  onChange={(e) => actualizarEstado(p, e.target.value)}
+                  className="text-xs bg-white border border-slate-300 rounded-full px-3 py-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                >
+                  <option value="pendiente">Pendiente</option>
+                  <option value="pagado">Pagado (descuenta stock)</option>
+                  <option value="entregado">Entregado</option>
+                  <option value="cancelado">Cancelado (devuelve stock)</option>
+                </select>
+              </div>
+
+              {/* Lista de productos */}
+              <div className="mt-2">
+                <p className="text-sm font-semibold text-slate-800">
+                  Productos
+                </p>
+                <ul className="mt-1 text-[13px] text-slate-700 space-y-1 bg-slate-50 rounded-2xl px-3 py-2 border border-slate-200">
+                  {p.items?.map((i, idx) => (
+                    <li key={idx} className="flex justify-between gap-3">
+                      <span className="truncate">
+                        {i.nombre} — ${i.precio} x {i.cantidad}
+                      </span>
+                      <span className="font-medium text-slate-900">
+                        ${i.precio * i.cantidad}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Botón WhatsApp */}
+              <button
+                onClick={() => enviarWhatsapp(p)}
+                className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 rounded-full transition-all text-sm"
+              >
+                Enviar resumen por WhatsApp
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
