@@ -14,13 +14,15 @@ import {
 } from "firebase/auth";
 import { Link } from "react-router-dom";
 
+// 🔑 API key de ImgBB (ideal: pasarla a .env)
+const IMGBB_API_KEY = "8aabe783868094ca8afb31264c5eb457";
+
 // MISMO LISTADO DE ADMINS QUE EN AdminPedidos.jsx
 const ADMIN_EMAILS = [
   "dylanc021684@gmail.com",
   "thagostina@gmail.com",
-   "ellautysk8@gmail.com",
+  "ellautysk8@gmail.com",
 ];
-
 
 const Admin = () => {
   const [categoria, setCategoria] = useState("sahumerios");
@@ -29,6 +31,7 @@ const Admin = () => {
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState("");
   const [imagen, setImagen] = useState("");
+  const [imagenFile, setImagenFile] = useState(null);
 
   const [estado, setEstado] = useState(null);
 
@@ -39,7 +42,6 @@ const Admin = () => {
   const [productos, setProductos] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(false);
   const [stock, setStock] = useState(0);
-
 
   // ID del producto que se está editando (si es null, estamos creando uno nuevo)
   const [editandoId, setEditandoId] = useState(null);
@@ -73,7 +75,10 @@ const Admin = () => {
     setDescripcion("");
     setPrecio("");
     setImagen("");
+    setImagenFile(null);
+    setStock(0);
     setEditandoId(null);
+    setEstado(null);
   };
 
   // Cargar productos de la categoría actual
@@ -97,12 +102,51 @@ const Admin = () => {
     }
   }, [user, categoria]);
 
+  // 👇 Nueva función para subir imagen a ImgBB
+  const subirImagenAImgBB = async (file) => {
+    if (!file) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch(
+        `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        console.error("Respuesta ImgBB:", data);
+        throw new Error("Error al subir la imagen a ImgBB");
+      }
+
+      // URL pública de la imagen
+      return data.data.url;
+    } catch (error) {
+      console.error("Error ImgBB:", error);
+      setEstado({
+        tipo: "error",
+        mensaje: "No se pudo subir la imagen (ImgBB).",
+      });
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEstado(null);
 
-    if (!nombre || !descripcion || !precio || !imagen) {
-      setEstado({ tipo: "error", mensaje: "Completá todos los campos." });
+    // 🔎 Validaciones básicas
+    if (!nombre || !descripcion || !precio) {
+      setEstado({
+        tipo: "error",
+        mensaje: "Completá nombre, descripción y precio.",
+      });
       return;
     }
 
@@ -115,17 +159,41 @@ const Admin = () => {
       return;
     }
 
+    // Queremos al menos URL o archivo
+    if (!imagen && !imagenFile) {
+      setEstado({
+        tipo: "error",
+        mensaje: "Cargá una URL de imagen o subí un archivo.",
+      });
+      return;
+    }
+
     try {
+      // 🖼 URL final de la imagen que vamos a guardar en Firestore
+      let imagenURLFinal = imagen || "";
+
+      // Si hay archivo seleccionado, lo subimos a ImgBB
+      if (imagenFile) {
+        const urlSubida = await subirImagenAImgBB(imagenFile);
+        if (!urlSubida) {
+          // Ya se seteo el estado de error adentro
+          return;
+        }
+        imagenURLFinal = urlSubida;
+      }
+
+      const data = {
+        nombre,
+        descripcion,
+        precio: precioNumber,
+        imagen: imagenURLFinal,
+        stock,
+      };
+
       if (editandoId) {
         // 🔁 Modo edición: actualizar producto existente
-        const ref = doc(db, categoria, editandoId);
-        await updateDoc(ref, {
-          nombre,
-          descripcion,
-          precio: precioNumber,
-          imagen,
-          stock,
-        });
+        const refDoc = doc(db, categoria, editandoId);
+        await updateDoc(refDoc, data);
 
         setEstado({
           tipo: "ok",
@@ -134,13 +202,7 @@ const Admin = () => {
       } else {
         // ➕ Modo creación: nuevo producto
         const colRef = collection(db, categoria);
-        await addDoc(colRef, {
-          nombre,
-          descripcion,
-          precio: precioNumber,
-          imagen,
-          stock,
-        });
+        await addDoc(colRef, data);
 
         setEstado({
           tipo: "ok",
@@ -152,7 +214,10 @@ const Admin = () => {
       cargarProductos(categoria);
     } catch (err) {
       console.error("Error guardando producto:", err);
-      setEstado({ tipo: "error", mensaje: "No se pudo guardar el producto." });
+      setEstado({
+        tipo: "error",
+        mensaje: "No se pudo guardar el producto.",
+      });
     }
   };
 
@@ -161,6 +226,8 @@ const Admin = () => {
     setDescripcion(producto.descripcion || "");
     setPrecio(producto.precio != null ? String(producto.precio) : "");
     setImagen(producto.imagen || "");
+    setImagenFile(null);
+    setStock(producto.stock != null ? producto.stock : 0);
     setEditandoId(producto.id);
     setEstado({
       tipo: "info",
@@ -319,20 +386,33 @@ const Admin = () => {
           />
         </div>
 
-        {/* STOCK */}
-<div className="space-y-1">
-  <label className="text-sm text-slate-300">Stock</label>
-  <input
-    type="number"
-    min="0"
-    value={stock}
-    onChange={(e) => setStock(Number(e.target.value))}
-    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200"
-    placeholder="Ej: 10"
-    required
-  />
-</div>
+        {/* IMAGEN (ARCHIVO) */}
+        <div className="space-y-1">
+          <label className="text-sm text-slate-300">Subir imagen</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImagenFile(e.target.files?.[0] || null)}
+            className="w-full text-sm text-slate-300"
+          />
+          <p className="text-[11px] text-slate-500">
+            Podés subir una imagen desde tu PC. Si hay URL y archivo, se usará la imagen subida.
+          </p>
+        </div>
 
+        {/* STOCK */}
+        <div className="space-y-1">
+          <label className="text-sm text-slate-300">Stock</label>
+          <input
+            type="number"
+            min="0"
+            value={stock}
+            onChange={(e) => setStock(Number(e.target.value))}
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200"
+            placeholder="Ej: 10"
+            required
+          />
+        </div>
 
         <div className="flex items-center gap-3">
           <button

@@ -66,6 +66,7 @@ function Aromatizantes({ onAddToCart, cart }) {
               product={productoConCategoria}
               currentQuantity={currentQuantity}
               onAddToCart={onAddToCart}
+              linkTo={`/producto/aromatizantes/${p.id}`}
             />
           );
         })}

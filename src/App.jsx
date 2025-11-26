@@ -13,6 +13,8 @@ import Admin from "./pages/Admin";
 import Checkout from "./pages/Checkout";
 import PedidoEnviado from "./pages/PedidoEnviado";
 import AdminPedidos from "./pages/AdminPedidos";
+import ProductDetail from "./pages/ProductDetail";
+
 
 const App = () => {
   // ✅ Inicializar carrito leyendo localStorage UNA sola vez
@@ -176,6 +178,12 @@ const App = () => {
             <Route path="/pedido-enviado" element={<PedidoEnviado />} />
 
             <Route path="/admin/pedidos" element={<AdminPedidos />} />
+
+            <Route
+  path="/producto/:categoria/:id"
+  element={<ProductDetail onAddToCart={handleAddToCart} />}
+/>
+
           </Routes>
         </main>
 

@@ -1,6 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
-function ProductCard({ product, onAddToCart, currentQuantity = 0 }) {
+function ProductCard({ product, onAddToCart, currentQuantity = 0, linkTo }) {
   const { nombre, descripcion, precio, imagen, stock } = product || {};
 
   const sinStock = stock === 0;
@@ -11,6 +12,28 @@ function ProductCard({ product, onAddToCart, currentQuantity = 0 }) {
     if (sinStock || alLimite) return;
     if (onAddToCart) onAddToCart(product);
   };
+
+  const titulo = linkTo ? (
+    <Link
+      to={linkTo}
+      className="hover:underline decoration-emerald-500/70 decoration-1"
+    >
+      {nombre}
+    </Link>
+  ) : (
+    nombre
+  );
+
+  const imagenNodo = imagen ? (
+    <img
+      src={imagen}
+      alt={nombre}
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
+    />
+  ) : null;
 
   return (
     <article
@@ -30,21 +53,14 @@ function ProductCard({ product, onAddToCart, currentQuantity = 0 }) {
       {/* Imagen */}
       {imagen && (
         <div className="w-full h-40 bg-slate-100">
-          <img
-            src={imagen}
-            alt={nombre}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
+          {linkTo ? <Link to={linkTo}>{imagenNodo}</Link> : imagenNodo}
         </div>
       )}
 
       {/* Contenido */}
       <div className="flex-1 flex flex-col p-4 space-y-2">
         <h3 className="text-sm font-semibold text-slate-900">
-          {nombre}
+          {titulo}
         </h3>
 
         {descripcion && (
@@ -57,7 +73,7 @@ function ProductCard({ product, onAddToCart, currentQuantity = 0 }) {
           <p className="text-[11px] text-slate-500">
             Stock disponible:{" "}
             <span className="text-emerald-700 font-medium">
-              {Math.max(stock - currentQuantity, 0)}
+              {Math.max(stock - (currentQuantity || 0), 0)}
             </span>
           </p>
         )}

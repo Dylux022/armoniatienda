@@ -64,6 +64,7 @@ function Sahumerios({ onAddToCart, cart }) {
               product={productoConCategoria}
               currentQuantity={currentQuantity}
               onAddToCart={onAddToCart}
+              linkTo={`/producto/sahumerios/${p.id}`}
             />
           );
         })}

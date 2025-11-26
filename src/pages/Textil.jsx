@@ -65,6 +65,7 @@ function Textil({ onAddToCart, cart }) {
               product={productoConCategoria}
               currentQuantity={currentQuantity}
               onAddToCart={onAddToCart}
+               linkTo={`/producto/textil/${p.id}`}
             />
           );
         })}
