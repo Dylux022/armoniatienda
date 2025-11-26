@@ -8,30 +8,52 @@ function Cart({ cart, onRemoveItem, onUpdateItemQuantity }) {
   );
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-emerald-300">
+    <div className="max-w-5xl mx-auto space-y-6">
+      <h2 className="text-2xl font-semibold text-slate-900">
         Carrito de compras 🛒
       </h2>
 
       {cart.length === 0 ? (
-        <p className="text-slate-400">
-          Todavía no agregaste productos. Andá al catálogo y sumá algo lindo ✨
-        </p>
+        <div className="bg-white border border-slate-200 rounded-3xl px-5 py-4 shadow-sm">
+          <p className="text-sm text-slate-600">
+            Todavía no agregaste productos. Andá al catálogo y sumá algo lindo ✨
+          </p>
+          <div className="mt-3">
+            <Link
+              to="/"
+              className="inline-flex items-center px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all"
+            >
+              Ver productos
+            </Link>
+          </div>
+        </div>
       ) : (
         <>
           <div className="space-y-3">
             {cart.map((item) => (
               <div
-                key={`${item.id}-${item.categoria}`}
-                className="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 gap-3"
+                key={`${item.id}-${item.categoria}-${item.aromaSeleccionado || "na"}`}
+                className="flex items-center justify-between gap-3 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm"
               >
-                <div className="flex-1">
-                  <p className="font-medium text-emerald-200">
+                {/* Info del producto */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900 truncate">
                     {item.nombre}
                   </p>
-                  <p className="text-xs text-slate-400">
+
+                  {item.aromaSeleccionado && (
+                    <p className="text-[11px] text-emerald-700">
+                      Aroma:{" "}
+                      <span className="font-medium">
+                        {item.aromaSeleccionado}
+                      </span>
+                    </p>
+                  )}
+
+                  <p className="text-xs text-slate-500">
                     ${item.precio} c/u
                   </p>
+
                   {item.stock != null && (
                     <p className="text-[11px] text-slate-500">
                       Stock disponible: {item.stock}
@@ -42,7 +64,7 @@ function Cart({ cart, onRemoveItem, onUpdateItemQuantity }) {
                 {/* Controles de cantidad */}
                 <div className="flex items-center gap-2">
                   <button
-                    className="w-7 h-7 rounded-full border border-slate-600 text-slate-200 text-sm hover:bg-slate-800 transition-all"
+                    className="w-7 h-7 rounded-full border border-slate-300 text-slate-700 text-sm hover:bg-slate-100 transition-all"
                     onClick={() =>
                       onUpdateItemQuantity(item.id, item.categoria, -1)
                     }
@@ -50,12 +72,12 @@ function Cart({ cart, onRemoveItem, onUpdateItemQuantity }) {
                     −
                   </button>
 
-                  <span className="min-w-[2rem] text-center text-sm text-slate-100">
+                  <span className="min-w-[2rem] text-center text-sm text-slate-900">
                     x{item.cantidad}
                   </span>
 
                   <button
-                    className="w-7 h-7 rounded-full border border-slate-600 text-slate-200 text-sm hover:bg-slate-800 transition-all"
+                    className="w-7 h-7 rounded-full border border-slate-300 text-slate-700 text-sm hover:bg-slate-100 transition-all"
                     onClick={() =>
                       onUpdateItemQuantity(item.id, item.categoria, +1)
                     }
@@ -66,11 +88,11 @@ function Cart({ cart, onRemoveItem, onUpdateItemQuantity }) {
 
                 {/* Subtotal + botón quitar */}
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-emerald-300">
+                  <p className="text-sm font-semibold text-emerald-700">
                     ${item.precio * item.cantidad}
                   </p>
                   <button
-                    className="mt-1 text-[11px] px-2 py-1 rounded-full border border-red-400/70 text-red-300 hover:bg-red-400/10 transition-all"
+                    className="mt-1 text-[11px] px-2 py-1 rounded-full border border-rose-300 text-rose-700 hover:bg-rose-50 transition-all"
                     onClick={() => onRemoveItem(item.id, item.categoria)}
                   >
                     Quitar
@@ -81,10 +103,10 @@ function Cart({ cart, onRemoveItem, onUpdateItemQuantity }) {
           </div>
 
           {/* Total + botones abajo */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-800 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200 pt-4">
             <div className="flex gap-2">
               <button
-                className="text-xs px-3 py-1 rounded-full border border-slate-500 text-slate-300 hover:bg-slate-800 transition-all"
+                className="text-xs px-3 py-1 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 transition-all"
                 onClick={() => {
                   onRemoveItem("all");
                 }}
@@ -94,13 +116,13 @@ function Cart({ cart, onRemoveItem, onUpdateItemQuantity }) {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <p className="text-xl font-semibold text-emerald-300 text-right">
+              <p className="text-xl font-semibold text-emerald-700 text-right">
                 Total: ${total}
               </p>
 
               <Link
                 to="/checkout"
-                className="px-4 py-2 rounded-full bg-emerald-400 text-slate-950 text-sm font-medium hover:bg-emerald-300 transition-all text-center"
+                className="px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all text-center"
               >
                 Finalizar compra
               </Link>

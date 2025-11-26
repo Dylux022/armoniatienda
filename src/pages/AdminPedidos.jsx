@@ -157,19 +157,21 @@ function AdminPedidos() {
     }
   };
 
-  // Armar mensaje para WhatsApp
+  // Armar mensaje para WhatsApp (incluyendo aroma si existe)
   const generarMensaje = (p) => {
     const fechaFormateada = p.fecha
       ? new Date(p.fecha).toLocaleString()
       : "—";
 
     const productosTexto = p.items
-      ?.map(
-        (i) =>
-          `• ${i.nombre} — $${i.precio} x ${i.cantidad} = $${
-            i.precio * i.cantidad
-          }`
-      )
+      ?.map((i) => {
+        const aroma =
+          i.aromaSeleccionado || i.aroma || i.scent || null;
+        const aromaTexto = aroma ? ` (Aroma: ${aroma})` : "";
+        return `• ${i.nombre}${aromaTexto} — $${i.precio} x ${
+          i.cantidad
+        } = $${i.precio * i.cantidad}`;
+      })
       .join("\n");
 
     return `
@@ -336,16 +338,28 @@ ID del pedido: ${p.id}
                   Productos
                 </p>
                 <ul className="mt-1 text-[13px] text-slate-700 space-y-1 bg-slate-50 rounded-2xl px-3 py-2 border border-slate-200">
-                  {p.items?.map((i, idx) => (
-                    <li key={idx} className="flex justify-between gap-3">
-                      <span className="truncate">
-                        {i.nombre} — ${i.precio} x {i.cantidad}
-                      </span>
-                      <span className="font-medium text-slate-900">
-                        ${i.precio * i.cantidad}
-                      </span>
-                    </li>
-                  ))}
+                  {p.items?.map((i, idx) => {
+                    const aroma =
+                      i.aromaSeleccionado || i.aroma || i.scent || null;
+
+                    return (
+                      <li key={idx} className="flex justify-between gap-3">
+                        <span className="truncate">
+                          {i.nombre}
+                          {aroma && (
+                            <span className="text-[11px] text-slate-500">
+                              {" "}
+                              — Aroma: {aroma}
+                            </span>
+                          )}{" "}
+                          — ${i.precio} x {i.cantidad}
+                        </span>
+                        <span className="font-medium text-slate-900">
+                          ${i.precio * i.cantidad}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 

@@ -10,6 +10,7 @@ function ProductDetail({ onAddToCart }) {
   const [product, setProduct] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [aromaSeleccionado, setAromaSeleccionado] = useState(""); // 🔹 nuevo
 
   useEffect(() => {
     const cargarProducto = async () => {
@@ -34,11 +35,12 @@ function ProductDetail({ onAddToCart }) {
           setError("Producto no encontrado.");
         } else {
           // Incluimos la categoría para que el carrito/stock la tenga
-          setProduct({
+          const data = {
             id: snap.id,
             categoria,
             ...snap.data(),
-          });
+          };
+          setProduct(data);
         }
       } catch (err) {
         console.error("Error cargando producto:", err);
@@ -51,9 +53,28 @@ function ProductDetail({ onAddToCart }) {
     cargarProducto();
   }, [categoria, id]);
 
+  // Cuando llega el producto, si tiene aromas, dejamos el primero seleccionado por defecto
+  useEffect(() => {
+    if (
+      product &&
+      Array.isArray(product.aromas) &&
+      product.aromas.length > 0
+    ) {
+      setAromaSeleccionado((prev) => prev || product.aromas[0]);
+    } else {
+      setAromaSeleccionado("");
+    }
+  }, [product]);
+
   const handleAdd = () => {
     if (!product || !onAddToCart) return;
-    onAddToCart(product);
+
+    const itemConAroma = {
+      ...product,
+      ...(aromaSeleccionado && { aromaSeleccionado }), // 👈 se guarda en el item
+    };
+
+    onAddToCart(itemConAroma);
   };
 
   if (cargando) {
@@ -76,7 +97,7 @@ function ProductDetail({ onAddToCart }) {
 
   if (!product) return null;
 
-  const { nombre, descripcion, precio, imagen, stock } = product;
+  const { nombre, descripcion, precio, imagen, stock, aromas } = product;
   const sinStock = stock === 0;
 
   return (
@@ -124,6 +145,29 @@ function ProductDetail({ onAddToCart }) {
               {stock}
             </span>
           </p>
+        )}
+
+        {/* 🔹 Selector de aroma si el producto tiene aromas cargados */}
+        {Array.isArray(aromas) && aromas.length > 0 && (
+          <div className="space-y-1 pt-1">
+            <label className="text-sm font-medium text-slate-700">
+              Aroma
+            </label>
+            <select
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              value={aromaSeleccionado}
+              onChange={(e) => setAromaSeleccionado(e.target.value)}
+            >
+              {aromas.map((aroma) => (
+                <option key={aroma} value={aroma}>
+                  {aroma}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Elegí el aroma que querés para este producto.
+            </p>
+          </div>
         )}
 
         <p className="text-xl font-semibold text-emerald-700">

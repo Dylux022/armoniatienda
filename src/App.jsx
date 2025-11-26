@@ -46,10 +46,12 @@ const App = () => {
     setCart((prev) => {
       const stock = product.stock ?? 9999; // si no tiene stock, asumimos "sin límite" por ahora
 
-      const index = prev.findIndex(
-        (item) =>
-          item.id === product.id && item.categoria === product.categoria
-      );
+const index = prev.findIndex(
+  (item) =>
+    item.id === product.id &&
+    item.categoria === product.categoria &&
+    item.aromaSeleccionado === product.aromaSeleccionado
+);
 
       if (index !== -1) {
         const existing = prev[index];

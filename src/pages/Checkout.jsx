@@ -17,32 +17,33 @@ function Checkout({ cart, onClearCart }) {
   const [estado, setEstado] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
-const total = useMemo(
-  () =>
-    cart.reduce(
-      (acc, item) => acc + (item.precio || 0) * (item.cantidad || 1),
-      0
-    ),
-  [cart]
-);
-
+  const total = useMemo(
+    () =>
+      cart.reduce(
+        (acc, item) => acc + (item.precio || 0) * (item.cantidad || 1),
+        0
+      ),
+    [cart]
+  );
 
   // Si el carrito está vacío, no tiene sentido hacer checkout
   if (!cart || cart.length === 0) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-emerald-300">
+      <div className="max-w-5xl mx-auto space-y-4">
+        <h2 className="text-2xl font-semibold text-slate-900">
           Checkout
         </h2>
-        <p className="text-slate-400 text-sm">
-          Tu carrito está vacío. Agregá algunos productos antes de finalizar la compra.
-        </p>
-        <Link
-          to="/"
-          className="inline-block px-4 py-2 rounded-full bg-emerald-400 text-slate-950 text-sm font-medium hover:bg-emerald-300 transition-all"
-        >
-          Ir al inicio
-        </Link>
+        <div className="bg-white border border-slate-200 rounded-3xl px-5 py-4 shadow-sm space-y-2">
+          <p className="text-slate-600 text-sm">
+            Tu carrito está vacío. Agregá algunos productos antes de finalizar la compra.
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all"
+          >
+            Ir al inicio
+          </Link>
+        </div>
       </div>
     );
   }
@@ -90,7 +91,15 @@ const total = useMemo(
 
     try {
       const pedido = {
-        items: cart,
+        items: cart.map((item) => ({
+          id: item.id,
+          nombre: item.nombre,
+          categoria: item.categoria,
+          precio: item.precio,
+          cantidad: item.cantidad,
+          stock: item.stock ?? null,
+          aromaSeleccionado: item.aromaSeleccionado || null,
+        })),
         total,
         fecha: new Date().toISOString(),
         estado: "pendiente",
@@ -105,17 +114,14 @@ const total = useMemo(
 
       await addDoc(collection(db, "pedidos"), pedido);
 
-      // limpiar carrito en frontend
       if (onClearCart) onClearCart();
 
-      // Redirigir a página de confirmación
       navigate("/pedido-enviado", {
-  state: {
-    total,
-    nombre: nombre.trim(),
-  },
-});
-
+        state: {
+          total,
+          nombre: nombre.trim(),
+        },
+      });
     } catch (err) {
       console.error("Error al enviar pedido:", err);
       setEstado({
@@ -128,36 +134,40 @@ const total = useMemo(
   };
 
   return (
-    <div className="grid gap-8 md:grid-cols-[1.4fr,1fr] items-start">
+    <div className="max-w-5xl mx-auto grid gap-8 md:grid-cols-[1.4fr,1fr] items-start">
       {/* FORMULARIO */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-emerald-300">
+        <h2 className="text-2xl font-semibold text-slate-900">
           Finalizar compra 🧾
         </h2>
 
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-600">
           Completá tus datos para que podamos coordinar el pago y la entrega.
         </p>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 bg-slate-900/60 border border-slate-800 rounded-2xl p-4"
+          className="space-y-4 bg-white border border-slate-200 rounded-3xl p-5 shadow-sm"
         >
           <div className="space-y-1">
-            <label className="text-xs text-slate-300">Nombre y apellido</label>
+            <label className="text-xs font-medium text-slate-700">
+              Nombre y apellido
+            </label>
             <input
               type="text"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-slate-300">Teléfono (WhatsApp)</label>
+            <label className="text-xs font-medium text-slate-700">
+              Teléfono (WhatsApp)
+            </label>
             <input
               type="tel"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
             />
@@ -165,15 +175,17 @@ const total = useMemo(
 
           {/* MÉTODO DE PAGO */}
           <div className="space-y-2">
-            <p className="text-xs text-slate-300">Método de pago</p>
+            <p className="text-xs font-medium text-slate-700">
+              Método de pago
+            </p>
             <div className="flex flex-wrap gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => setMetodoPago("transferencia")}
                 className={`px-3 py-1.5 rounded-full border ${
                   metodoPago === "transferencia"
-                    ? "border-emerald-400 bg-emerald-400/10 text-emerald-200"
-                    : "border-slate-600 text-slate-200 hover:bg-slate-900"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 } transition-all`}
               >
                 Transferencia
@@ -183,8 +195,8 @@ const total = useMemo(
                 onClick={() => setMetodoPago("efectivo")}
                 className={`px-3 py-1.5 rounded-full border ${
                   metodoPago === "efectivo"
-                    ? "border-emerald-400 bg-emerald-400/10 text-emerald-200"
-                    : "border-slate-600 text-slate-200 hover:bg-slate-900"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 } transition-all`}
               >
                 Efectivo
@@ -194,8 +206,8 @@ const total = useMemo(
                 onClick={() => setMetodoPago("otro")}
                 className={`px-3 py-1.5 rounded-full border ${
                   metodoPago === "otro"
-                    ? "border-emerald-400 bg-emerald-400/10 text-emerald-200"
-                    : "border-slate-600 text-slate-200 hover:bg-slate-900"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 } transition-all`}
               >
                 A coordinar
@@ -205,15 +217,17 @@ const total = useMemo(
 
           {/* ENTREGA */}
           <div className="space-y-2">
-            <p className="text-xs text-slate-300">Entrega</p>
+            <p className="text-xs font-medium text-slate-700">
+              Entrega
+            </p>
             <div className="flex flex-wrap gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => setEntrega("retiro")}
                 className={`px-3 py-1.5 rounded-full border ${
                   entrega === "retiro"
-                    ? "border-emerald-400 bg-emerald-400/10 text-emerald-200"
-                    : "border-slate-600 text-slate-200 hover:bg-slate-900"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 } transition-all`}
               >
                 Retiro en punto a coordinar
@@ -223,8 +237,8 @@ const total = useMemo(
                 onClick={() => setEntrega("envio")}
                 className={`px-3 py-1.5 rounded-full border ${
                   entrega === "envio"
-                    ? "border-emerald-400 bg-emerald-400/10 text-emerald-200"
-                    : "border-slate-600 text-slate-200 hover:bg-slate-900"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 } transition-all`}
               >
                 Envío a domicilio
@@ -236,19 +250,23 @@ const total = useMemo(
           {entrega === "envio" && (
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs text-slate-300">Dirección</label>
+                <label className="text-xs font-medium text-slate-700">
+                  Dirección
+                </label>
                 <input
                   type="text"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                   value={direccion}
                   onChange={(e) => setDireccion(e.target.value)}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-slate-300">Barrio / Zona</label>
+                <label className="text-xs font-medium text-slate-700">
+                  Barrio / Zona
+                </label>
                 <input
                   type="text"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                   value={barrio}
                   onChange={(e) => setBarrio(e.target.value)}
                 />
@@ -258,11 +276,11 @@ const total = useMemo(
 
           {/* NOTAS OPCIONALES */}
           <div className="space-y-1">
-            <label className="text-xs text-slate-300">
+            <label className="text-xs font-medium text-slate-700">
               Notas adicionales (opcional)
             </label>
             <textarea
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 min-h-[70px]"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 min-h-[70px] focus:outline-none focus:ring-2 focus:ring-emerald-300"
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Ej: horario preferido, timbre, indicaciones..."
@@ -272,7 +290,7 @@ const total = useMemo(
           <button
             type="submit"
             disabled={enviando}
-            className="w-full mt-2 py-2 rounded-full bg-emerald-400 text-slate-950 text-sm font-medium hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+            className="w-full mt-2 py-2 rounded-full bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
           >
             {enviando ? "Enviando pedido..." : "Confirmar pedido"}
           </button>
@@ -280,7 +298,7 @@ const total = useMemo(
           {estado && (
             <p
               className={`text-xs mt-2 ${
-                estado.tipo === "error" ? "text-red-300" : "text-emerald-300"
+                estado.tipo === "error" ? "text-red-500" : "text-emerald-600"
               }`}
             >
               {estado.mensaje}
@@ -290,45 +308,47 @@ const total = useMemo(
       </section>
 
       {/* RESUMEN DEL PEDIDO */}
-      <aside className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <h3 className="text-lg font-semibold text-emerald-200">
+      <aside className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+        <h3 className="text-lg font-semibold text-slate-900">
           Tu pedido
         </h3>
 
         <div className="space-y-2 max-h-64 overflow-auto pr-1">
-{cart.map((item, idx) => (
-  <div
-    key={idx}
-    className="flex items-center justify-between gap-2 text-sm bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2"
-  >
-    <div className="flex-1">
-      <p className="text-emerald-200">{item.nombre}</p>
+          {cart.map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-slate-900 truncate">{item.nombre}</p>
 
-      {/* Si querés dejar la descripción, dejamos esto */}
-      {item.descripcion && (
-        <p className="text-[11px] text-slate-400 line-clamp-1">
-          {item.descripcion}
-        </p>
-      )}
+                {item.aromaSeleccionado && (
+                  <p className="text-[11px] text-emerald-700">
+                    Aroma: {item.aromaSeleccionado}
+                  </p>
+                )}
 
-      {/* Cantidad y precio unitario */}
-      <p className="text-[11px] text-slate-400">
-        ${item.precio} x {item.cantidad}
-      </p>
-    </div>
+                {item.descripcion && (
+                  <p className="text-[11px] text-slate-500 line-clamp-1">
+                    {item.descripcion}
+                  </p>
+                )}
 
-    {/* Subtotal por producto */}
-    <p className="text-sm font-semibold text-emerald-300">
-      ${item.precio * item.cantidad}
-    </p>
-  </div>
-))}
+                <p className="text-[11px] text-slate-500">
+                  ${item.precio} x {item.cantidad}
+                </p>
+              </div>
 
+              <p className="text-sm font-semibold text-emerald-700">
+                ${item.precio * item.cantidad}
+              </p>
+            </div>
+          ))}
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-800 pt-3">
-          <p className="text-sm text-slate-300">Total</p>
-          <p className="text-xl font-semibold text-emerald-300">
+        <div className="flex items-center justify-between border-t border-slate-200 pt-3">
+          <p className="text-sm text-slate-600">Total</p>
+          <p className="text-xl font-semibold text-emerald-700">
             ${total}
           </p>
         </div>

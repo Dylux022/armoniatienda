@@ -6,6 +6,7 @@ import {
   getDocs,
   updateDoc,
   doc,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   onAuthStateChanged,
@@ -32,6 +33,7 @@ const Admin = () => {
   const [precio, setPrecio] = useState("");
   const [imagen, setImagen] = useState("");
   const [imagenFile, setImagenFile] = useState(null);
+  const [aromasTexto, setAromasTexto] = useState(""); // 🔹 "Lavanda, Vainilla"
 
   const [estado, setEstado] = useState(null);
 
@@ -77,6 +79,7 @@ const Admin = () => {
     setImagen("");
     setImagenFile(null);
     setStock(0);
+    setAromasTexto("");
     setEditandoId(null);
     setEstado(null);
   };
@@ -182,12 +185,19 @@ const Admin = () => {
         imagenURLFinal = urlSubida;
       }
 
+      // 🧴 Aromas: se guardan como array de strings
+      const aromasArray = aromasTexto
+        .split(",")
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0);
+
       const data = {
         nombre,
         descripcion,
         precio: precioNumber,
         imagen: imagenURLFinal,
         stock,
+        ...(aromasArray.length > 0 && { aromas: aromasArray }),
       };
 
       if (editandoId) {
@@ -228,12 +238,44 @@ const Admin = () => {
     setImagen(producto.imagen || "");
     setImagenFile(null);
     setStock(producto.stock != null ? producto.stock : 0);
+    setAromasTexto(
+      Array.isArray(producto.aromas) ? producto.aromas.join(", ") : ""
+    );
     setEditandoId(producto.id);
     setEstado({
       tipo: "info",
       mensaje: `Editando: ${producto.nombre}`,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // 🔥 Eliminar producto
+  const handleEliminarProducto = async (producto) => {
+    const confirmar = window.confirm(
+      `¿Eliminar "${producto.nombre}" de ${categoria}? Esta acción no se puede deshacer.`
+    );
+    if (!confirmar) return;
+
+    try {
+      await deleteDoc(doc(db, categoria, producto.id));
+
+      setEstado({
+        tipo: "ok",
+        mensaje: "Producto eliminado correctamente.",
+      });
+
+      if (editandoId === producto.id) {
+        limpiarFormulario();
+      }
+
+      cargarProductos(categoria);
+    } catch (err) {
+      console.error("Error eliminando producto:", err);
+      setEstado({
+        tipo: "error",
+        mensaje: "No se pudo eliminar el producto.",
+      });
+    }
   };
 
   // 1) Mientras chequea si estás logueado
@@ -416,6 +458,24 @@ const Admin = () => {
             </div>
           </div>
 
+          {/* Aromas */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700">
+              Aromas (separar con coma)
+            </label>
+            <input
+              type="text"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              placeholder="Ej: Lavanda, Vainilla, Coco"
+              value={aromasTexto}
+              onChange={(e) => setAromasTexto(e.target.value)}
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Estos aromas se pueden usar después para que el cliente elija uno
+              al hacer el pedido.
+            </p>
+          </div>
+
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700">
               URL de la imagen
@@ -500,7 +560,7 @@ const Admin = () => {
               {productos.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-3 shadow-sm"
+                  className="flex items-start gap-3 bg-white border border-slate-200 rounded-2xl p-3 shadow-sm"
                 >
                   {p.imagen && (
                     <img
@@ -511,7 +571,7 @@ const Admin = () => {
                     />
                   )}
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-sm font-medium text-slate-900 truncate">
                       {p.nombre}
                     </p>
@@ -522,18 +582,35 @@ const Admin = () => {
                       ${p.precio}
                     </p>
                     {typeof p.stock === "number" && (
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-slate-500">
                         Stock: {p.stock}
+                      </p>
+                    )}
+
+                    {Array.isArray(p.aromas) && p.aromas.length > 0 && (
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Aromas:{" "}
+                        <span className="text-slate-700">
+                          {p.aromas.join(" · ")}
+                        </span>
                       </p>
                     )}
                   </div>
 
-                  <button
-                    onClick={() => handleEditarProducto(p)}
-                    className="text-xs px-3 py-1.5 rounded-full border border-emerald-400 text-emerald-700 hover:bg-emerald-50 transition-all"
-                  >
-                    Editar
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleEditarProducto(p)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-emerald-400 text-emerald-700 hover:bg-emerald-50 transition-all"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleEliminarProducto(p)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-rose-300 text-rose-700 hover:bg-rose-50 transition-all"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
