@@ -13,7 +13,7 @@ import { onAuthStateChanged } from "firebase/auth";
 const ADMIN_EMAILS = [
   "dylanc021684@gmail.com",
   "thagostina@gmail.com",
-   "Armonia.ald@gmail.com",
+   "armonia.ald@gmail.com",
   "ellautysk8@gmail.com",
 ];
 
