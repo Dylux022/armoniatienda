@@ -14,6 +14,7 @@ import Checkout from "./pages/Checkout";
 import PedidoEnviado from "./pages/PedidoEnviado";
 import AdminPedidos from "./pages/AdminPedidos";
 import ProductDetail from "./pages/ProductDetail";
+ import Catalogo from "./pages/Catalogo";
 
 
 const App = () => {
@@ -137,6 +138,12 @@ const index = prev.findIndex(
        <main className="max-w-5xl mx-auto px-4 py-8 text-soft">
           <Routes>
             <Route path="/" element={<Home />} />
+
+            <Route
+  path="/catalogo"
+  element={<Catalogo onAddToCart={handleAddToCart} />}
+/>
+
 
             <Route
               path="/sahumerios"
